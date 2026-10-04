@@ -7,6 +7,7 @@ import {
   listProviders,
 } from "@/server/patients/services";
 
+import { ImportPanel } from "./import-panel";
 import { PatientsWorkspace } from "./patients-workspace";
 
 function toOptions(labels: Record<string, string>) {
@@ -42,6 +43,7 @@ export default async function PatientsPage({
           Export to Excel
         </a>
       </div>
+      <ImportPanel />
       <PatientsWorkspace
         patients={patients}
         assignees={assignees}
