@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, type ReactNode } from "react";
+import { formatDateTime } from "@/lib/time";
 import {
   createUserAction,
   deactivateUserAction,
@@ -84,10 +85,6 @@ function ActionForm({
   );
 }
 
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-US", { timeZone: "UTC" });
-}
-
 export function UsersSection({
   users,
   currentUserId,
@@ -157,7 +154,7 @@ export function UsersSection({
               <th className="px-3 py-2 font-medium">Email</th>
               <th className="px-3 py-2 font-medium">Role</th>
               <th className="px-3 py-2 font-medium">Status</th>
-              <th className="px-3 py-2 font-medium">Created</th>
+              <th className="px-3 py-2 font-medium">Created (California)</th>
               <th className="px-3 py-2 font-medium">Actions</th>
             </tr>
           </thead>
@@ -180,7 +177,7 @@ export function UsersSection({
                     {u.active ? "Active" : "Inactive"}
                   </td>
                   <td className="px-3 py-2 text-zinc-700">
-                    {formatDate(u.createdAt)}
+                    {formatDateTime(new Date(u.createdAt))}
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex flex-col gap-2">

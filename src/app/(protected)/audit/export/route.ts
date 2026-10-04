@@ -1,9 +1,10 @@
 import { requireAdmin } from "@/server/auth/authorization";
 import { logAudit } from "@/server/audit/services";
-import { listAllAuditLogsForExport } from "@/server/audit/queries";
+import { listAllAuditLogsForExport, parseDateRange, countAuditLogs, EXPORT_LIMIT } from "@/server/audit/queries";
 import ExcelJS from "exceljs";
+import { formatDateTime, formatDayInZone } from "@/lib/time";
 
-export async function GET() {
+export async function GET(request: Request) {
   let adminId: string;
   try {
     adminId = (await requireAdmin()).user.id;
@@ -17,12 +18,20 @@ export async function GET() {
     throw e;
   }
 
-  const logs = await listAllAuditLogsForExport();
+  const { searchParams } = new URL(request.url);
+  const range = parseDateRange(searchParams.get("from"), searchParams.get("to"));
+
+  const count = await countAuditLogs(range);
+  if (count > EXPORT_LIMIT) {
+    return Response.json({ error: "Too many entries. Narrow the date range." }, { status: 400 });
+  }
+
+  const logs = await listAllAuditLogsForExport(range);
 
   const workbook = new ExcelJS.Workbook();
   const sheet = workbook.addWorksheet("Audit Log");
   sheet.columns = [
-    { header: "Time (UTC)", key: "createdAt", width: 20 },
+    { header: "Time (California)", key: "createdAt", width: 25 },
     { header: "Actor Name", key: "actorName", width: 20 },
     { header: "Actor Email", key: "actorEmail", width: 30 },
     { header: "Action", key: "action", width: 15 },
@@ -34,7 +43,7 @@ export async function GET() {
 
   for (const log of logs) {
     sheet.addRow({
-      createdAt: log.createdAt.toISOString(),
+      createdAt: formatDateTime(log.createdAt),
       actorName: log.actorName ?? "deleted user",
       actorEmail: log.actorEmail ?? "deleted user",
       action: log.action,
@@ -50,15 +59,21 @@ export async function GET() {
     action: "EXPORT",
     actorUserId: adminId,
     entityType: "AuditLog",
-    metadata: { rows: logs.length },
+    metadata: {
+        rows: logs.length,
+        from: range.fromText || null,
+        to: range.toText || null
+    },
   });
 
-  const stamp = new Date().toISOString().slice(0, 10);
+  const fromPart = range.fromText || "all";
+  const toPart = range.toText || formatDayInZone(new Date());
+  const filename = `audit-log-${fromPart}_${toPart}.xlsx`;
 
   return new Response(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "Content-Disposition": `attachment; filename="audit-log-${stamp}.xlsx"`,
+      "Content-Disposition": `attachment; filename="${filename}"`,
       "Cache-Control": "no-store",
     },
   });

@@ -1,7 +1,30 @@
 import { prisma } from "@/lib/prisma";
 import { Prisma, type AuditAction } from "@prisma/client";
+import { dayStartUtc, nextDayStartUtc } from "@/lib/time";
 
 const PAGE_SIZE = 50;
+export const EXPORT_LIMIT = 50000;
+
+export type AuditRange = { from: Date | null; toExclusive: Date | null; fromText: string; toText: string };
+
+export function parseDateRange(rawFrom: unknown, rawTo: unknown): AuditRange {
+  const fromText = typeof rawFrom === "string" ? rawFrom : "";
+  const toText = typeof rawTo === "string" ? rawTo : "";
+
+  const from = dayStartUtc(fromText);
+  const toExclusive = nextDayStartUtc(toText);
+
+  if (from && toExclusive && from >= toExclusive) {
+    return { from: null, toExclusive: null, fromText: "", toText: "" };
+  }
+
+  return {
+    from: from ?? null,
+    toExclusive: toExclusive ?? null,
+    fromText: from ? fromText : "",
+    toText: toExclusive ? toText : ""
+  };
+}
 
 function clampPage(raw: unknown): number {
   const p = Number(raw);
@@ -21,7 +44,7 @@ export type AuditLogListRow = {
   actorEmail: string | null;
 };
 
-export async function listAuditLogs(rawPage: unknown): Promise<{
+export async function listAuditLogs(rawPage: unknown, range: AuditRange): Promise<{
   rows: AuditLogListRow[];
   total: number;
   page: number;
@@ -29,6 +52,9 @@ export async function listAuditLogs(rawPage: unknown): Promise<{
 }> {
   const page = clampPage(rawPage);
   const skip = (page - 1) * PAGE_SIZE;
+
+  const where = { createdAt: { gte: range.from ?? undefined, lt: range.toExclusive ?? undefined } };
+  const filter = (range.from || range.toExclusive) ? where : {};
 
   const [rows, total] = await Promise.all([
     prisma.auditLog.findMany({
@@ -41,11 +67,12 @@ export async function listAuditLogs(rawPage: unknown): Promise<{
         createdAt: true,
         actor: { select: { name: true, email: true } },
       },
+      where: filter,
       orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       skip,
       take: PAGE_SIZE,
     }),
-    prisma.auditLog.count(),
+    prisma.auditLog.count({ where: filter }),
   ]);
 
   return {
@@ -65,7 +92,16 @@ export async function listAuditLogs(rawPage: unknown): Promise<{
   };
 }
 
-export async function listAllAuditLogsForExport(): Promise<AuditLogListRow[]> {
+export async function countAuditLogs(range: AuditRange): Promise<number> {
+  const where = { createdAt: { gte: range.from ?? undefined, lt: range.toExclusive ?? undefined } };
+  const filter = (range.from || range.toExclusive) ? where : {};
+  return prisma.auditLog.count({ where: filter });
+}
+
+export async function listAllAuditLogsForExport(range: AuditRange): Promise<AuditLogListRow[]> {
+  const where = { createdAt: { gte: range.from ?? undefined, lt: range.toExclusive ?? undefined } };
+  const filter = (range.from || range.toExclusive) ? where : {};
+
   const rows = await prisma.auditLog.findMany({
     select: {
       id: true,
@@ -76,8 +112,9 @@ export async function listAllAuditLogsForExport(): Promise<AuditLogListRow[]> {
       createdAt: true,
       actor: { select: { name: true, email: true } },
     },
+    where: filter,
     orderBy: [{ createdAt: "desc" }, { id: "desc" }],
-    take: 50000,
+    take: EXPORT_LIMIT,
   });
 
   return rows.map((r) => ({

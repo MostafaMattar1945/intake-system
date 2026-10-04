@@ -1,6 +1,7 @@
 import { requireUser } from "@/server/auth/authorization";
 import { logAudit } from "@/server/audit/services";
 import { buildPatientsWorkbook } from "@/server/patients/export";
+import { formatDayInZone } from "@/lib/time";
 
 export async function GET() {
   let userId: string;
@@ -14,7 +15,7 @@ export async function GET() {
   }
 
   const { buffer, rowCount } = await buildPatientsWorkbook();
-  const stamp = new Date().toISOString().slice(0, 10);
+  const stamp = formatDayInZone(new Date());
 
   await logAudit({
     action: "EXPORT",
