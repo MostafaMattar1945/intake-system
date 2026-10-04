@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { Prisma, UserRole } from "@prisma/client";
 import { z } from "zod";
+import { USER_ADMIN_LOCK_ID } from "@/server/auth/locks";
 
 const userInputSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -40,8 +41,8 @@ export async function createCredentialUser(args: CreateUserArgs) {
   try {
     return await prisma.$transaction(async (tx) => {
       // 1. Take transaction-level advisory lock (blocks concurrent runs)
-      // Lock ID is a 64-bit integer. 1000 is used for user bootstrap/creation logic.
-      await tx.$executeRaw`SELECT pg_advisory_xact_lock(1000)`;
+      // Lock ID is a 64-bit integer shared across all user-admin operations.
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(${USER_ADMIN_LOCK_ID})`;
 
       if (args.isBootstrap) {
         // 2. Count users (safe from races because this transaction holds the lock)
