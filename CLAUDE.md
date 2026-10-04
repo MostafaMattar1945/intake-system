@@ -13,8 +13,10 @@ Internal patient intake workspace. Replaces an old claude.ai-artifact prototype 
 Next.js (TypeScript, App Router) + PostgreSQL + Prisma 6 + Better Auth (password hashing, server-side sessions) + Tailwind + shadcn/ui + TanStack Table + Zod + ExcelJS.
 
 ## Roles
-- ADMIN: the first registered user becomes Admin. Admin manages users and the Facility Agent list in Settings, can delete records, sees Audit Log and Settings.
+- ADMIN: created once via `npm run create-admin` (scripts/create-admin.ts), never via public sign-up. Admin creates other users and manages the Facility Agent list in Settings, can delete records, sees Audit Log and Settings.
 - USER: can add/edit patients, import/export, see dashboard.
+- Public sign-up is permanently disabled (emailAndPassword.disableSignUp: true). All users are created by an ADMIN in Settings via src/server/auth/create-credential-user.ts.
+- Do NOT use Better Auth's admin plugin; use custom Settings actions.
 - Enforce roles on the SERVER (server actions / route handlers), never only in the UI. No dev-only auth bypass.
 
 ## Enums (final — do not invent others)
