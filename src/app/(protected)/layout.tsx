@@ -23,7 +23,7 @@ export default async function ProtectedLayout({
 
   return (
     <div className="min-h-screen bg-zinc-50">
-      <header className="border-b border-zinc-200 bg-white">
+      <header className="border-t-[3px] border-t-brand-primary border-b border-zinc-200 bg-white">
         <div className="mx-auto max-w-5xl px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <div>

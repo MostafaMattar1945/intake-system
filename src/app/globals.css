@@ -10,6 +10,11 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  /* Brand Tokens */
+  --color-brand-primary: #7cb720;
+  --color-brand-button: #4d7a0f;
+  --color-brand-button-hover: #3f6610;
+  --color-brand-bg-light: #f3f9e8;
 }
 
 @media (prefers-color-scheme: dark) {
