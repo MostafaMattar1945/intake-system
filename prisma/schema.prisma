@@ -121,15 +121,15 @@ model Patient {
   phone1                String
   phone2                String?
   provider              String?
-  appointmentDate       DateTime?
+  appointmentDate       DateTime? @db.Date
   assignedToId          String
   assignedTo            User          @relation("PatientAssignedTo", fields: [assignedToId], references: [id], onDelete: Restrict)
   status                Status
   source                Source
   scheduledReason       String
   notes                 String?
-  receivedDate          DateTime?
-  scheduledDate         DateTime?
+  receivedDate          DateTime? @db.Date
+  scheduledDate         DateTime? @db.Date
   referringFacility     String?
   facilityAgentId       String?
   facilityAgent         FacilityAgent? @relation(fields: [facilityAgentId], references: [id], onDelete: Restrict)
