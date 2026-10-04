@@ -107,10 +107,11 @@ model Verification {
 }
 
 model FacilityAgent {
-  id       String    @id @default(cuid())
-  name     String
-  active   Boolean   @default(true)
-  patients Patient[]
+  id             String    @id @default(cuid())
+  name           String
+  nameNormalized String    @unique
+  active         Boolean   @default(true)
+  patients       Patient[]
 }
 
 model Patient {
