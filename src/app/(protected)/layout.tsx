@@ -36,9 +36,14 @@ export default async function ProtectedLayout({
                 Patients
               </Link>
               {user.role === "ADMIN" && (
-                <Link href="/settings" className="hover:text-zinc-900">
-                  Settings
-                </Link>
+                <>
+                  <Link href="/settings" className="hover:text-zinc-900">
+                    Settings
+                  </Link>
+                  <Link href="/audit" className="hover:text-zinc-900">
+                    Audit log
+                  </Link>
+                </>
               )}
             </nav>
           </div>
