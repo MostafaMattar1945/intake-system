@@ -4,6 +4,7 @@ import type { Source, Status } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { normalizeName } from "@/lib/normalize";
+import { logAudit } from "@/server/audit/services";
 import type { NewPatientData } from "@/lib/validation/patient";
 
 export type PatientRow = {
@@ -169,6 +170,7 @@ function toDb(data: NewPatientData) {
 export async function createPatient(
   data: NewPatientData,
   createdById: string,
+  auditOp: "create" | "create_duplicate_override",
 ): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const problem = await checkRefs(data);
   if (problem) return { ok: false, error: problem };
@@ -177,6 +179,15 @@ export async function createPatient(
     data: { ...toDb(data), createdById },
     select: { id: true },
   });
+
+  await logAudit({
+    action: "ADD",
+    actorUserId: createdById,
+    entityType: "Patient",
+    entityId: created.id,
+    metadata: { op: auditOp },
+  });
+
   return { ok: true, id: created.id };
 }
 
