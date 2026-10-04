@@ -1,6 +1,5 @@
 import { Source, Status } from "@prisma/client";
 import { z } from "zod";
-import { isFacilitySource } from "@/lib/constants";
 
 const REQUIRED_STRING_MESSAGE = "Required";
 const INVALID_DATE_MESSAGE = "Enter a valid date";
@@ -44,7 +43,8 @@ export const patientConditionalRules = {
     return status === Status.SCHEDULED;
   },
   isReferringFacilityRequired(source: Source): boolean {
-    return isFacilitySource(source);
+    void source;
+    return false;
   },
   isFacilityAgentRequired(source: Source): boolean {
     void source;
@@ -78,17 +78,6 @@ export const newPatientSchema = z
         code: "custom",
         path: ["scheduledDate"],
         message: "Scheduled date is required when status is Scheduled",
-      });
-    }
-
-    if (
-      patientConditionalRules.isReferringFacilityRequired(patient.source) &&
-      !patient.referringFacility
-    ) {
-      context.addIssue({
-        code: "custom",
-        path: ["referringFacility"],
-        message: "Referring facility is required for facility, insurance, or fax referrals",
       });
     }
 

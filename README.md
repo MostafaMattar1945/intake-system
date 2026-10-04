@@ -123,7 +123,7 @@ Do not use this with real patient data until these are addressed:
 - Known `npm audit` findings in production dependencies (5): the Prisma CLI chain (`deepmerge-ts`) and `uuid` via `exceljs`. Do not run `npm audit fix --force` (it downgrades Prisma and ExcelJS). Re-check before go-live.
 - The database role used in development has `CREATEDB`; production uses `prisma migrate deploy` with a normal role.
 - Create a new strong production Admin password and rotate every secret before go-live.
-- Open product question: whether Referring Facility and Facility Agent should be required only for the facility, insurance and fax referral sources (today Referring Facility is required for those three and Facility Agent is optional; the rule lives in `patientConditionalRules`).
+- Referring Facility and Facility Agent are optional for all sources.
 
 ## Project layout
 

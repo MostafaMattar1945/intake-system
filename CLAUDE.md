@@ -39,10 +39,10 @@ Source (stored as enum, shown with label):
 - RETURNING_PATIENT = "Returning Patient"
 
 ## Patient fields
-Patient Name, Phone Number 1, Phone Number 2 (optional), Provider (free text with autocomplete from existing values), Appointment Date, Assigned To (relation to User), Status, Source, Scheduled / Reason if Not Scheduled (free text; "Scheduled" when status is Scheduled), Notes (optional), Received Date, Scheduled Date, Referring Facility, Facility Agent (relation to FacilityAgent), createdBy, timestamps.
+Patient Name, Phone Number 1, Phone Number 2 (optional), Provider (free text with autocomplete from existing values), Appointment Date, Assigned To (relation to User), Status, Source, Scheduled / Reason if Not Scheduled (free text; "Scheduled" when status is Scheduled), Notes (optional), Received Date, Scheduled Date, Referring Facility (optional), Facility Agent (relation to FacilityAgent, optional), createdBy, timestamps.
 
 Required (red star): everything except Phone 2 and Notes.
-OPEN QUESTION (ask me, do not decide): in the old data Referring Facility and Facility Agent are empty when Source is not a facility/insurance/fax referral (e.g. Google, Online Search). Propose making these two conditionally required only for FACILITY_REFERRAL, INSURANCE_REFERRAL, FAX_REFERRAL, and wait for my answer.
+Referring Facility and Facility Agent are optional for all sources.
 
 "Save & add next patient" clears the form. Warn on duplicate patient name (trim, collapse spaces, case-insensitive) and offer to update the existing record.
 

@@ -38,7 +38,6 @@ type SharedProps = {
   providers: string[];
   statusOptions: Option[];
   sourceOptions: Option[];
-  facilitySources: string[];
 };
 
 const inputClass =
@@ -87,7 +86,6 @@ function PatientForm({
   providers,
   statusOptions,
   sourceOptions,
-  facilitySources,
 }: SharedProps & { editing: PatientRowProps | null; onDone: () => void }) {
   const isEdit = editing !== null;
   const [status, setStatus] = useState(editing?.status ?? "");
@@ -281,12 +279,10 @@ function PatientForm({
         </Field>
         <Field
           label="Referring facility"
-          required={facilitySources.includes(source)}
           error={errors.referringFacility}
         >
           <input
             name="referringFacility"
-            required={facilitySources.includes(source)}
             defaultValue={editing?.referringFacility ?? ""}
             className={inputClass}
           />

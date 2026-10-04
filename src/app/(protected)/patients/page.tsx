@@ -1,4 +1,4 @@
-import { FACILITY_SOURCES, SOURCE_LABELS, STATUS_LABELS } from "@/lib/constants";
+import { SOURCE_LABELS, STATUS_LABELS } from "@/lib/constants";
 import { requireUserOrRedirect } from "@/server/auth/require-user-or-redirect";
 import {
   listActiveFacilityAgents,
@@ -51,7 +51,6 @@ export default async function PatientsPage({
         providers={providers}
         statusOptions={toOptions(STATUS_LABELS)}
         sourceOptions={toOptions(SOURCE_LABELS)}
-        facilitySources={[...FACILITY_SOURCES]}
         isAdmin={user.role === "ADMIN"}
         initialQuery={query}
       />
