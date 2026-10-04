@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 
 import { requireUser } from "@/server/auth/authorization";
+import { logAudit } from "@/server/audit/services";
 import { ImportError, importPatients } from "@/server/patients/import";
 
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -42,6 +43,17 @@ export async function POST(request: Request) {
       userId,
     );
     revalidatePath("/patients");
+    await logAudit({
+      action: "IMPORT",
+      actorUserId: userId,
+      entityType: "Patient",
+      metadata: {
+        imported: report.imported,
+        duplicates: report.skippedDuplicates,
+        rejected: report.rejectedTotal,
+        warnings: report.warningTotal,
+      },
+    });
     return Response.json(report);
   } catch (e) {
     if (e instanceof ImportError) {

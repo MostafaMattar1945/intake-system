@@ -1,9 +1,11 @@
 import { requireUser } from "@/server/auth/authorization";
+import { logAudit } from "@/server/audit/services";
 import { buildPatientsWorkbook } from "@/server/patients/export";
 
 export async function GET() {
+  let userId: string;
   try {
-    await requireUser();
+    userId = (await requireUser()).user.id;
   } catch (e) {
     if (e instanceof Error && e.message === "UNAUTHORIZED") {
       return new Response("Unauthorized", { status: 401 });
@@ -11,8 +13,15 @@ export async function GET() {
     throw e;
   }
 
-  const { buffer } = await buildPatientsWorkbook();
+  const { buffer, rowCount } = await buildPatientsWorkbook();
   const stamp = new Date().toISOString().slice(0, 10);
+
+  await logAudit({
+    action: "EXPORT",
+    actorUserId: userId,
+    entityType: "Patient",
+    metadata: { rows: rowCount },
+  });
 
   return new Response(new Uint8Array(buffer), {
     headers: {
