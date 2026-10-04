@@ -32,7 +32,16 @@ export default async function PatientsPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold text-zinc-900">Patients</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-zinc-900">Patients</h1>
+        {/* Plain <a>: a download, not a page navigation. */}
+        <a
+          href="/patients/export"
+          className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-100"
+        >
+          Export to Excel
+        </a>
+      </div>
       <PatientsWorkspace
         patients={patients}
         assignees={assignees}
