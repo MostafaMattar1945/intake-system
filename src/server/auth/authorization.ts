@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { UserRole } from "@prisma/client";
 
 export async function requireUserFromHeaders(reqHeaders: Headers) {
@@ -48,4 +49,22 @@ export async function requireUser() {
 
 export async function requireAdmin() {
   return requireAdminFromHeaders(await headers());
+}
+
+export async function requireAdminOrRedirect(): Promise<{
+  session: NonNullable<Awaited<ReturnType<typeof requireAdmin>>["session"]>;
+  user: NonNullable<Awaited<ReturnType<typeof requireAdmin>>["user"]>;
+}> {
+  try {
+    return await requireAdmin();
+  } catch (e) {
+    if (e instanceof Error && e.message === "UNAUTHORIZED") {
+      // redirect throws internally
+      redirect("/login");
+    }
+    if (e instanceof Error && e.message === "FORBIDDEN") {
+      redirect("/dashboard");
+    }
+    throw e;
+  }
 }

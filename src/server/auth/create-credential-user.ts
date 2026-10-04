@@ -4,13 +4,19 @@ import { Prisma, UserRole } from "@prisma/client";
 import { z } from "zod";
 import { USER_ADMIN_LOCK_ID } from "@/server/auth/locks";
 
+export const credentialPasswordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .max(128, "Password must be at most 128 characters");
+
 const userInputSchema = z.object({
-  email: z.string().trim().pipe(z.email("Invalid email address")),
-  name: z.string().trim().min(1, "Name cannot be empty"),
-  password: z
+  email: z
     .string()
-    .min(8, "Password must be at least 8 characters")
-    .max(128, "Password must be at most 128 characters"),
+    .trim()
+    .pipe(z.email("Invalid email address"))
+    .transform((v) => v.toLowerCase()),
+  name: z.string().trim().min(1, "Name cannot be empty"),
+  password: credentialPasswordSchema,
 });
 
 export interface CreateUserArgs {
@@ -64,7 +70,7 @@ export async function createCredentialUser(args: CreateUserArgs) {
       const user = await tx.user.create({
         data: {
           id: userId,
-          email: email.toLowerCase(),
+          email,
           name,
           emailVerified: true, // Internal/Admin created users can log in immediately
           role: finalRole,
