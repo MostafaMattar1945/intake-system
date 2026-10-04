@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { normalizeName } from "@/lib/normalize";
+import { logAudit } from "@/server/audit/services";
 import {
   credentialPasswordSchema,
   createCredentialUser,
@@ -73,14 +74,20 @@ export async function createUser(params: {
   role: UserRole;
   actingAdminId: string;
 }): Promise<{ ok: true; userId: string } | { ok: false; error: string }> {
-  void params.actingAdminId;
-
   try {
     const user = await createCredentialUser({
       email: params.email,
       name: params.name,
       password: params.password,
       role: params.role,
+    });
+
+    await logAudit({
+      action: "USER_CHANGE",
+      actorUserId: params.actingAdminId,
+      entityType: "User",
+      entityId: user.id,
+      metadata: { op: "create", role: params.role },
     });
 
     return { ok: true, userId: user.id };
@@ -97,6 +104,15 @@ export async function deactivateUserService(
 ): Promise<{ ok: true; userId: string } | { ok: false; error: string }> {
   try {
     const user = await deactivateUser(targetId, actingAdminId);
+
+    await logAudit({
+      action: "USER_CHANGE",
+      actorUserId: actingAdminId,
+      entityType: "User",
+      entityId: user.id,
+      metadata: { op: "deactivate" },
+    });
+
     return { ok: true, userId: user.id };
   } catch (err) {
     const mapped = mapKnownServiceError(err);
@@ -111,6 +127,15 @@ export async function reactivateUserService(
 ): Promise<{ ok: true; userId: string } | { ok: false; error: string }> {
   try {
     const user = await reactivateUser(targetId, actingAdminId);
+
+    await logAudit({
+      action: "USER_CHANGE",
+      actorUserId: actingAdminId,
+      entityType: "User",
+      entityId: user.id,
+      metadata: { op: "reactivate" },
+    });
+
     return { ok: true, userId: user.id };
   } catch (err) {
     const mapped = mapKnownServiceError(err);
@@ -126,6 +151,15 @@ export async function changeUserRoleService(
 ): Promise<{ ok: true; userId: string } | { ok: false; error: string }> {
   try {
     const user = await changeUserRole(targetId, nextRole, actingAdminId);
+
+    await logAudit({
+      action: "USER_CHANGE",
+      actorUserId: actingAdminId,
+      entityType: "User",
+      entityId: user.id,
+      metadata: { op: "change_role", role: nextRole },
+    });
+
     return { ok: true, userId: user.id };
   } catch (err) {
     const mapped = mapKnownServiceError(err);
@@ -139,8 +173,6 @@ export async function resetUserPassword(params: {
   newPassword: string;
   actingAdminId: string;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
-  void params.actingAdminId;
-
   const parsedPassword = credentialPasswordSchema.safeParse(params.newPassword);
   if (!parsedPassword.success) {
     return { ok: false, error: "Unable to reset password" };
@@ -150,7 +182,7 @@ export async function resetUserPassword(params: {
   const ctx = await auth.$context;
   const passwordHash = await ctx.password.hash(parsedPassword.data);
 
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const updated = await tx.account.updateMany({
       where: {
         userId: params.targetId,
@@ -172,6 +204,18 @@ export async function resetUserPassword(params: {
 
     return { ok: true as const };
   });
+
+  if (result.ok) {
+    await logAudit({
+      action: "USER_CHANGE",
+      actorUserId: params.actingAdminId,
+      entityType: "User",
+      entityId: params.targetId,
+      metadata: { op: "reset_password" },
+    });
+  }
+
+  return result;
 }
 
 const facilityAgentNameSchema = z
@@ -206,8 +250,6 @@ export async function addFacilityAgent(params: {
   | { ok: true; facilityAgentId: string }
   | { ok: false; error: string }
 > {
-  void params.actingAdminId;
-
   const parsedName = facilityAgentNameSchema.safeParse(params.name);
   if (!parsedName.success) {
     return {
@@ -222,6 +264,14 @@ export async function addFacilityAgent(params: {
   try {
     const created = await prisma.facilityAgent.create({
       data: { name, nameNormalized, active: true },
+    });
+
+    await logAudit({
+      action: "ADD",
+      actorUserId: params.actingAdminId,
+      entityType: "FacilityAgent",
+      entityId: created.id,
+      metadata: { op: "add" },
     });
 
     return { ok: true, facilityAgentId: created.id };
@@ -242,6 +292,14 @@ export async function addFacilityAgent(params: {
         data: { name, active: true, nameNormalized },
       });
 
+      await logAudit({
+        action: "EDIT",
+        actorUserId: params.actingAdminId,
+        entityType: "FacilityAgent",
+        entityId: reactivated.id,
+        metadata: { op: "reactivate" },
+      });
+
       return { ok: true, facilityAgentId: reactivated.id };
     }
 
@@ -254,8 +312,6 @@ export async function renameFacilityAgent(params: {
   name: string;
   actingAdminId: string;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
-  void params.actingAdminId;
-
   const parsedName = facilityAgentNameSchema.safeParse(params.name);
   if (!parsedName.success) {
     return {
@@ -277,6 +333,14 @@ export async function renameFacilityAgent(params: {
       },
     });
 
+    await logAudit({
+      action: "EDIT",
+      actorUserId: params.actingAdminId,
+      entityType: "FacilityAgent",
+      entityId: params.facilityAgentId,
+      metadata: { op: "rename" },
+    });
+
     return { ok: true };
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
@@ -295,12 +359,18 @@ export async function deactivateFacilityAgent(params: {
   facilityAgentId: string;
   actingAdminId: string;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
-  void params.actingAdminId;
-
   try {
     await prisma.facilityAgent.update({
       where: { id: params.facilityAgentId },
       data: { active: false },
+    });
+
+    await logAudit({
+      action: "EDIT",
+      actorUserId: params.actingAdminId,
+      entityType: "FacilityAgent",
+      entityId: params.facilityAgentId,
+      metadata: { op: "deactivate" },
     });
 
     return { ok: true };
@@ -317,12 +387,18 @@ export async function reactivateFacilityAgent(params: {
   facilityAgentId: string;
   actingAdminId: string;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
-  void params.actingAdminId;
-
   try {
     await prisma.facilityAgent.update({
       where: { id: params.facilityAgentId },
       data: { active: true },
+    });
+
+    await logAudit({
+      action: "EDIT",
+      actorUserId: params.actingAdminId,
+      entityType: "FacilityAgent",
+      entityId: params.facilityAgentId,
+      metadata: { op: "reactivate" },
     });
 
     return { ok: true };
