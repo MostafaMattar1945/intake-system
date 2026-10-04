@@ -142,7 +142,9 @@ export async function importPatients(
   const workbook = new ExcelJS.Workbook();
   try {
     if (file.name.toLowerCase().endsWith(".csv")) {
-      await workbook.csv.read(Readable.from(file.data));
+      await workbook.csv.read(Readable.from(file.data), {
+        map: (value: string) => (value === "" ? null : value),
+      });
     } else {
       await workbook.xlsx.load(file.data as unknown as ExcelJS.Buffer);
     }
