@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum Status {
+  SCHEDULED
+  VOICEMAIL
+  SPANISH
+  NOT_ELIGIBLE
+}
+
+enum Source {
+  FACILITY_REFERRAL
+  INSURANCE_REFERRAL
+  FAX_REFERRAL
+  ONLINE_REQUESTS
+  PODIUM
+  GOOGLE
+  ONLINE_SEARCH
+  CHATGPT
+  WORD_OF_MOUTH
+  RETURNING_PATIENT
+}
+
+enum AuditAction {
+  LOGIN
+  ADD
+  EDIT
+  DELETE
+  IMPORT
+  EXPORT
+  USER_CHANGE
+}
+
+model User {
+  id            String   @id
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  role          UserRole @default(USER)
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  assignedPatients Patient[] @relation("PatientAssignedTo")
+  createdPatients  Patient[] @relation("PatientCreatedBy")
+  auditLogs        AuditLog[] @relation("AuditActor")
+  sessions         Session[]
+  accounts         Account[]
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+model FacilityAgent {
+  id       String    @id @default(cuid())
+  name     String
+  active   Boolean   @default(true)
+  patients Patient[]
+}
+
+model Patient {
+  id                    String        @id @default(cuid())
+  patientName           String
+  patientNameNormalized String
+  phone1                String
+  phone2                String?
+  provider              String?
+  appointmentDate       DateTime?
+  assignedToId          String
+  assignedTo            User          @relation("PatientAssignedTo", fields: [assignedToId], references: [id], onDelete: Restrict)
+  status                Status
+  source                Source
+  scheduledReason       String
+  notes                 String?
+  receivedDate          DateTime?
+  scheduledDate         DateTime?
+  referringFacility     String?
+  facilityAgentId       String?
+  facilityAgent         FacilityAgent? @relation(fields: [facilityAgentId], references: [id], onDelete: Restrict)
+  createdById           String
+  createdBy             User          @relation("PatientCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  @@index([patientNameNormalized])
+  @@index([assignedToId])
+  @@index([facilityAgentId])
+  @@index([createdById])
+}
+
+model AuditLog {
+  id          String      @id @default(cuid())
+  action      AuditAction
+  actorUserId String?
+  actor       User?       @relation("AuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+  entityType  String
+  entityId    String?
+  metadata    Json?
+  createdAt   DateTime    @default(now())
+  @@index([actorUserId, createdAt])
+  @@index([action, createdAt])
+  @@index([entityType, entityId])
+}
