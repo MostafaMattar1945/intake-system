@@ -45,7 +45,7 @@ const inputClass =
 const buttonClass =
   "rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-900 hover:bg-zinc-100 disabled:opacity-50";
 const primaryButtonClass =
-  "rounded-lg bg-zinc-900 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60";
+  "rounded-lg bg-brand-button px-4 py-2 text-sm font-semibold text-white hover:bg-brand-button-hover disabled:cursor-not-allowed disabled:opacity-60";
 
 function Field({
   label,
@@ -435,7 +435,7 @@ export function PatientsWorkspace({
         ) : (
           <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white">
             <table className="min-w-full text-left text-sm">
-              <thead className="border-b border-zinc-200 text-zinc-600">
+              <thead className="border-b border-zinc-200 bg-brand-bg-light text-zinc-600">
                 <tr>
                   {[
                     "Patient",
