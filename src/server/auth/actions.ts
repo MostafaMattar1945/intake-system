@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { APIError } from "better-auth/api";
+import { logAudit } from "@/server/audit/services";
 
 const loginSchema = z.object({
   email: z.string().trim().pipe(z.email("Invalid email address")),
@@ -35,13 +36,15 @@ export async function loginAction(
 
   try {
     const reqHeaders = await headers();
-    await auth.api.signInEmail({
+    const { user } = await auth.api.signInEmail({
       body: {
         email,
         password,
       },
       headers: reqHeaders,
     });
+    // Log successful login
+    await logAudit({ action: "LOGIN", actorUserId: user.id, entityType: "User", entityId: user.id });
   } catch (err) {
     if (err instanceof APIError) {
       if (err.statusCode === 401 || err.statusCode === 403) {
