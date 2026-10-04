@@ -234,7 +234,7 @@ export async function addFacilityAgent(params: {
       if (!existing) throw err;
 
       if (existing.active) {
-        return { ok: false, error: "already exists" };
+        return { ok: false, error: "Facility agent already exists" };
       }
 
       const reactivated = await prisma.facilityAgent.update({
