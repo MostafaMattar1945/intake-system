@@ -9,7 +9,7 @@ export async function requireUserFromHeaders(reqHeaders: Headers) {
   });
 
   if (!sessionData?.session || !sessionData?.user) {
-    throw new Error("UNAUTHORIZED: No active session");
+    throw new Error("UNAUTHORIZED");
   }
 
   // Re-read user from live DB to ensure role and active status are fresh
@@ -19,11 +19,11 @@ export async function requireUserFromHeaders(reqHeaders: Headers) {
   });
 
   if (!liveUser) {
-    throw new Error("UNAUTHORIZED: User no longer exists");
+    throw new Error("UNAUTHORIZED");
   }
 
   if (liveUser.active === false) {
-    throw new Error("UNAUTHORIZED: User is inactive");
+    throw new Error("UNAUTHORIZED");
   }
 
   return {
@@ -36,7 +36,7 @@ export async function requireAdminFromHeaders(reqHeaders: Headers) {
   const result = await requireUserFromHeaders(reqHeaders);
 
   if (result.user.role !== UserRole.ADMIN) {
-    throw new Error("FORBIDDEN: Admin permissions required");
+    throw new Error("FORBIDDEN");
   }
 
   return result;

@@ -5,7 +5,7 @@ import { z } from "zod";
 import { USER_ADMIN_LOCK_ID } from "@/server/auth/locks";
 
 const userInputSchema = z.object({
-  email: z.string().email("Invalid email address"),
+  email: z.string().trim().pipe(z.email("Invalid email address")),
   name: z.string().trim().min(1, "Name cannot be empty"),
   password: z
     .string()

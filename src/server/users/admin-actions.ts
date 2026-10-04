@@ -28,7 +28,7 @@ async function enforceLastAdminGuard(
   }
 }
 
-export async function deactivateUser(targetId: string, actingAdminId: string) {
+export async function deactivateUser(targetId: string, _actingAdminId: string) {
   return await prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(${USER_ADMIN_LOCK_ID})`;
 
@@ -53,7 +53,7 @@ export async function deactivateUser(targetId: string, actingAdminId: string) {
   });
 }
 
-export async function reactivateUser(targetId: string, actingAdminId: string) {
+export async function reactivateUser(targetId: string, _actingAdminId: string) {
   return await prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(${USER_ADMIN_LOCK_ID})`;
 
@@ -75,7 +75,7 @@ export async function reactivateUser(targetId: string, actingAdminId: string) {
 export async function changeUserRole(
   targetId: string,
   targetRole: UserRole,
-  actingAdminId: string
+  _actingAdminId: string
 ) {
   return await prisma.$transaction(async (tx) => {
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(${USER_ADMIN_LOCK_ID})`;
