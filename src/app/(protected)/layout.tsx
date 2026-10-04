@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { requireUser } from "@/server/auth/authorization";
@@ -24,9 +25,22 @@ export default async function ProtectedLayout({
     <div className="min-h-screen bg-zinc-50">
       <header className="border-b border-zinc-200 bg-white">
         <div className="mx-auto max-w-5xl px-4 py-4 flex items-center justify-between">
-          <div>
-            <div className="text-sm text-zinc-600">Signed in</div>
-            <div className="font-medium text-zinc-900">{user.name}</div>
+          <div className="flex items-center gap-6">
+            <div>
+              <div className="text-sm text-zinc-600">Signed in</div>
+              <div className="font-medium text-zinc-900">{user.name}</div>
+            </div>
+
+            <nav className="flex items-center gap-4 text-sm font-medium text-zinc-600">
+              <Link href="/patients" className="hover:text-zinc-900">
+                Patients
+              </Link>
+              {user.role === "ADMIN" && (
+                <Link href="/settings" className="hover:text-zinc-900">
+                  Settings
+                </Link>
+              )}
+            </nav>
           </div>
 
           <form action={signOutAction}>
