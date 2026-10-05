@@ -66,7 +66,7 @@ export function ImportPanel() {
         <button
           type="submit"
           disabled={pending}
-          className="rounded-lg border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-900 hover:bg-zinc-100 disabled:opacity-50"
+          className="rounded-lg bg-brand-button px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-button-hover disabled:opacity-50"
         >
           {pending ? "Importing..." : "Import"}
         </button>
