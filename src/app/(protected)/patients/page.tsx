@@ -35,13 +35,20 @@ export default async function PatientsPage({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold text-zinc-900">Patients</h1>
-        {/* Plain <a>: a download, not a page navigation. */}
-        <a
-          href="/patients/export"
-          className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-100"
-        >
-          Export to Excel
-        </a>
+        {/* Plain GET form: a download, not a page navigation. Empty dates export everything. */}
+        <form action="/patients/export" method="get" className="flex flex-wrap items-end gap-2">
+          <label className="text-xs text-zinc-600">
+            Received from
+            <input type="date" name="from" className="mt-1 block rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900" />
+          </label>
+          <label className="text-xs text-zinc-600">
+            to
+            <input type="date" name="to" className="mt-1 block rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900" />
+          </label>
+          <button type="submit" className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-100">
+            Export to Excel
+          </button>
+        </form>
       </div>
       <ImportPanel />
       <PatientsWorkspace

@@ -1,5 +1,7 @@
 // Plain function (no next/* imports). Builds the Excel file in the old sheet's
 // column layout, with duplicate patient names removed (newest record wins).
+// Optionally filtered by Received Date (a calendar day, stored as DATE at UTC
+// midnight, so the range is compared as plain days, never converted to a time zone).
 import ExcelJS from "exceljs";
 
 import { SOURCE_LABELS, STATUS_LABELS } from "@/lib/constants";
@@ -24,11 +26,36 @@ const COLUMNS = [
 
 const DATE_KEYS = ["appointmentDate", "receivedDate", "scheduledDate"] as const;
 
-export async function buildPatientsWorkbook(): Promise<{
+export type ExportRange = { from: Date | null; to: Date | null };
+
+// Strict YYYY-MM-DD that is a real calendar day. Returns the day at UTC midnight,
+// or null for anything else (empty, text, 2026-02-31, ...).
+export function parseCalendarDay(text: string | null | undefined): Date | null {
+  if (!text || !/^\d{4}-\d{2}-\d{2}$/.test(text)) return null;
+  const date = new Date(`${text}T00:00:00.000Z`);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toISOString().slice(0, 10) === text ? date : null;
+}
+
+export async function buildPatientsWorkbook(
+  range: ExportRange = { from: null, to: null },
+): Promise<{
   buffer: ArrayBuffer;
   rowCount: number;
 }> {
+  // Patients without a Received Date are excluded automatically once a bound is set.
+  const where =
+    range.from || range.to
+      ? {
+          receivedDate: {
+            ...(range.from ? { gte: range.from } : {}),
+            ...(range.to ? { lte: range.to } : {}),
+          },
+        }
+      : {};
+
   const patients = await prisma.patient.findMany({
+    where,
     include: {
       assignedTo: { select: { name: true } },
       facilityAgent: { select: { name: true } },
