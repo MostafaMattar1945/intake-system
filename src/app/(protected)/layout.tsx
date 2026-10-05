@@ -32,6 +32,9 @@ export default async function ProtectedLayout({
             </div>
 
             <nav className="flex items-center gap-4 text-sm font-medium text-white/90">
+              <Link href="/dashboard" className="hover:text-white">
+                Dashboard
+              </Link>
               <Link href="/patients" className="hover:text-white">
                 Patients
               </Link>
